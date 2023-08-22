@@ -1,107 +1,75 @@
-
-import pygame
-import time
-
-
-
-#define size of the item
-DISPLAY_HEIGHT = 600
-DISPLAY_WIDTH = 600
-BLOCK_HEIGHT = 50*1.5
-BLOCK_WIDTH = 50*1.5
-FACTOR = 25 * 1.5
-
-#define color
-COLORED_BLOCK = (175,194,225)
-COLOR_WHITE_BLOCK = (255,255,255)
+from const import *
+from square import Square
+from piece import *
 
 
-#define piece ranking
-PAWN = 0
-KNIGHT = 1
-BISHOP = 2
-ROOK = 3
-KING = 4
-QUEEN = 5
-BLANK = -1
-
-BLACK_FAMILY = 'black'
-WHITE_FAMILY = 'white'
-
-class Piece:
-    x = 0  # x coordinate
-    y = 0  # y coordinate
-    rank = 0  # rank of the piece
-    life = True  # is the piece dead or alive
-    family = ""
-    def __init__(self, x_position, y_position, p_rank, p_family):
-        self.x = x_position
-        self.y = y_position
-        self.rank = p_rank
-        self.family = p_family
-
-initial_board = [[ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK],
-                 [PAWN, ] * 8,
-                 [BLANK, ] * 8,
-                 [BLANK, ] * 8,
-                 [BLANK, ] * 8,
-                 [BLANK, ] * 8,
-                 [PAWN, ] * 8,
-                 [ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK]]
-
-        
-class ChessGUI:
+class Board:
     def __init__(self):
-        pygame.init()
-        self.game_display = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
-        pygame.display.update()
-        self.clock = pygame.time.Clock()
-        self.pieces = []
-        
-    def initialize_piece(self):
-        for y,row in  enumerate(initial_board):
-            for x,piece in enumerate(row):
-                family = WHITE_FAMILY if y in [0,1] else BLACK_FAMILY
-                if piece == BLANK:
-                    continue
-                elif piece == PAWN:
-                    self.pieces.append(Piece(x, y, piece, family))
-                    img = pygame.image.load('images/pawn_'+ family +'.png')
-                elif piece == KNIGHT:
-                    self.pieces.append(Piece(x, y, piece, family))
-                    img = pygame.image.load('images/knight_'+ family +'.png')
-                elif piece == BISHOP:
-                    self.pieces.append(Piece(x, y, piece, family))
-                    img = pygame.image.load('images/bishop_'+ family +'.png')
-                elif piece == ROOK:
-                    self.pieces.append(Piece(x, y, piece, family))
-                    img = pygame.image.load('images/rook_'+ family +'.png')
-                elif piece == QUEEN:
-                    self.pieces.append(Piece(x, y, piece, family))
-                    img = pygame.image.load('images/queen_'+ family +'.png')
-                elif piece == KING:
-                    self.pieces.append(Piece(x, y, piece, family))
-                    img = pygame.image.load('images/king_'+ family +'.png')
-                self.game_display.blit(img, ((2 * x) * FACTOR, ((2 *y) * FACTOR)))
-    def board_draw(self):
-        self.game_display.fill(COLORED_BLOCK)
-        for i in range(8):
-            if i % 2 == 0:
-                j = 0
-            else:
-                j = 1
-            while j < 8:
-                pygame.draw.rect(self.game_display, COLOR_WHITE_BLOCK, (i * 50 * 1.5, j * 50 *1.5, BLOCK_WIDTH, BLOCK_HEIGHT))
-                j += 2
-        self.initialize_piece()
-    def game(self):
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-            self.board_draw()
-            pygame.display.update()
-                
-                
-chess_board = ChessGUI().game()
+        self.squares = [[0, 0, 0, 0, 0, 0, 0, 0] for col in range(COLS)]
+        self._create()
+        self._add_pieces('white')
+        self._add_pieces('black')
+
+    def valid_pos(self, *args):
+        for arg in args:
+            if arg < 0 or arg > 7:
+                return False
+        return True
+
+    def knight_moves(self, piece, row, col):
+        knight_possible_moves = [
+            (row-2, col+1), (row-2, col+1),
+            (row+2, col+1), (row+2, col-1),
+            (row-1, col+2), (row-1, col-2),
+            (row+1, col+2), (row+1, col-2)]
+
+        for move in knight_possible_moves:
+            move_row, move_col = move
+            # check the valid position is empty or has enemy
+            if self.valid_pos(move_row, move_col):
+                if self.squares[move_row][move_col].is_empty_or_has_enemy_piece(piece.color):
+                    pass
+
+    def all_possible_moves(self, piece, col, row):
+        if piece.name == 'pawn':
+            pass
+        elif piece.name == 'knight':
+            pass
+        elif piece.name == 'bishop':
+            pass
+        elif piece.name == 'rook':
+            pass
+        elif piece.name == 'queen':
+            pass
+        elif piece.name == 'king':
+            pass
+
+    def _create(self):
+        for row in range(ROWS):
+            for col in range(COLS):
+                self.squares[col][row] = Square(row, col)
+
+    def _add_pieces(self, color):
+        row_pawn, row_other = (6, 7) if color == 'white' else (1, 0)
+
+        # pawns
+        for col in range(COLS):
+            self.squares[row_pawn][col] = Square(row_pawn, col, Pawn(color))
+
+        # knights
+        self.squares[row_other][1] = Square(row_other, 1, Knight(color))
+        self.squares[row_other][6] = Square(row_other, 6, Knight(color))
+
+        # bishops
+        self.squares[row_other][2] = Square(row_other, 2, Bishop(color))
+        self.squares[row_other][5] = Square(row_other, 5, Bishop(color))
+
+        # rooks
+        self.squares[row_other][0] = Square(row_other, 0, Rook(color))
+        self.squares[row_other][7] = Square(row_other, 7, Rook(color))
+
+        # queen
+        self.squares[row_other][3] = Square(row_other, 3, Queen(color))
+
+        # King
+        self.squares[row_other][4] = Square(row_other, 4, King(color))
