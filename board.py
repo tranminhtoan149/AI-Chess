@@ -1,6 +1,7 @@
 from const import *
 from square import Square
 from piece import *
+from move import Move
 
 
 class Board:
@@ -28,7 +29,11 @@ class Board:
             # check the valid position is empty or has enemy
             if self.valid_pos(move_row, move_col):
                 if self.squares[move_row][move_col].is_empty_or_has_enemy_piece(piece.color):
-                    pass
+                    init_move = Square(row, col)
+                    final_piece = self.squares[move_row][move_col].piece
+                    final_move = Square(move_row, move_col, final_piece)
+                    move = Move(init_move, final_move)
+                    piece.add_move(move)
 
     def all_possible_moves(self, piece, col, row):
         if piece.name == 'pawn':

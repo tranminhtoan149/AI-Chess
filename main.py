@@ -28,7 +28,7 @@ class Main:
                     pass
                 elif event.type == pygame.MOUSEBUTTONUP:
                     pass
-                
+
             pygame.display.update()
 
 
