@@ -10,11 +10,11 @@ class Square:
     def is_empty(self):
         return self.piece == None
 
-    def has_enemy_piece(self, color):
+    def has_enemy(self, color):
         return self.has_piece() and self.piece.color != color
 
-    def has_team_piece(self, color):
+    def has_team(self, color):
         return self.has_piece() and self.piece.color == color
 
     def is_empty_or_has_enemy_piece(self, color):
-        return self.is_empty() or self.has_enemy_piece(color)
+        return self.is_empty() or self.has_enemy(color)
