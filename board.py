@@ -9,6 +9,8 @@ class Board:
     def __init__(self):
         self.squares = [[0, 0, 0, 0, 0, 0, 0, 0] for col in range(COLS)]
         self.last_move = None
+        self.all_possible_moves = []
+        self.is_game_over = False
         self._create()
         self._add_pieces('white')
         self._add_pieces('black')
@@ -81,6 +83,50 @@ class Board:
                             piece.add_move(move)
                     else:
                         piece.add_move(move)
+
+        # en passant moves
+        r = 3 if piece.color == 'white' else 4
+        fr = 2 if piece.color == 'white' else 5
+        # left en pessant
+        if self.valid_pos(col-1) and row == r:
+            if self.squares[row][col-1].has_enemy(piece.color):
+                p = self.squares[row][col-1].piece
+                if isinstance(p, Pawn):
+                    if p.en_passant:
+                        # create initial and final move squares
+                        initial = Square(row, col)
+                        final = Square(fr, col-1, p)
+                        # create a new move
+                        move = Move(initial, final)
+
+                        # check potencial checks
+                        if bool:
+                            if not self.in_check(piece, move):
+                                # append new move
+                                piece.add_move(move)
+                        else:
+                            # append new move
+                            piece.add_move(move)
+
+        # right en pessant
+        if self.valid_pos(col+1) and row == r:
+            if self.squares[row][col+1].has_enemy(piece.color):
+                p = self.squares[row][col+1].piece
+                if isinstance(p, Pawn):
+                    if p.en_passant:
+                        # create initial and final move squares
+                        initial = Square(row, col)
+                        final = Square(fr, col+1, p)
+                        # create a new move
+                        move = Move(initial, final)
+                        # check potencial checks
+                        if bool:
+                            if not self.in_check(piece, move):
+                                # append new move
+                                piece.add_move(move)
+                        else:
+                            # append new move
+                            piece.add_move(move)
 
     def straight_moves(self, piece, row, col, increments, bool=False):
         for increment in increments:
@@ -199,23 +245,35 @@ class Board:
         init_move = move.init_move
         final_move = move.final_move
 
+        en_passant_empty = self.squares[final_move.row][final_move.col].is_empty(
+        )
+
         # change init and final
         self.squares[init_move.row][init_move.col].piece = None
         self.squares[final_move.row][final_move.col].piece = piece
+        if isinstance(piece, Pawn):
+            # en passant capture
+            diff = final_move.col - init_move.col
+            if diff != 0 and en_passant_empty:
+                # console board move update
+                self.squares[init_move.row][init_move.col + diff].piece = None
+                self.squares[final_move.row][final_move.col].piece = piece
 
-        # check pawn for promotion
-        if piece.name == 'pawn':
-            self.check_promotion(piece, final_move)
+            # pawn promotion
+            else:
+                self.check_promotion(piece, final_move)
 
         # check king castling
-        if piece.name == 'king':
-            if self.castling(init_move, final_move):
-                diff = final_move.col - init_move.col
-                rook = piece.left_rook if (diff < 0) else piece.right_rook
-                self.move(rook, rook.moves[-1])
+        if piece.name == 'king' and self.castling(init_move, final_move):
+            diff = final_move.col - init_move.col
+            rook = piece.left_rook if (diff < 0) else piece.right_rook
+            self.move(rook, rook.moves[-1])
         # move and clear valid move
         piece.moved = True
-        piece.clear_moves()
+        piece.clear_moves()3
+        # check if game is over
+        if isinstance(final_move.piece, King):
+            self.is_game_over = True
 
         self.last_move = move
 
@@ -229,6 +287,16 @@ class Board:
     def castling(self, initial, final):
         return abs(initial.col - final.col) == 2
 
+    def set_true_en_passant(self, piece):
+        if not isinstance(piece, Pawn):
+            return
+        for row in range(ROWS):
+            for col in range(COLS):
+                if isinstance(self.squares[row][col].piece, Pawn):
+                    self.squares[row][col].piece.en_passant = False
+
+        piece.en_passant = True
+
     def in_check(self, piece, move):
         temp_piece = copy.deepcopy(piece)
         temp_board = copy.deepcopy(self)
@@ -237,13 +305,13 @@ class Board:
             for col in range(COLS):
                 if temp_board.squares[row][col].has_enemy(piece.color):
                     p = temp_board.squares[row][col].piece
-                    temp_board.all_possible_moves(p, row, col, False)
+                    temp_board.all_possible_piece_moves(p, row, col, False)
                     for p_move in p.moves:
                         if isinstance(p_move.final_move.piece, King):
                             return True
         return False
 
-    def all_possible_moves(self, piece, row, col, bool=False):
+    def all_possible_piece_moves(self, piece, row, col, bool=False):
         if piece.name == 'pawn':
             self.pawn_moves(piece, row, col, bool)
         elif piece.name == 'knight':
@@ -305,3 +373,11 @@ class Board:
 
         # King
         self.squares[row_other][4] = Square(row_other, 4, King(color))
+
+    def all_moves_board(self):
+        for row in range(ROWS):
+            for col in range(COLS):
+                self.all_possible_piece_moves(
+                    self.squares[row][col].piece, row, col, True)
+                self.all_possible_moves.append(
+                    self.squares[row][col].piece.moves)

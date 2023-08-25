@@ -1,4 +1,5 @@
 from const import *
+import pygame
 
 
 class Selector:
