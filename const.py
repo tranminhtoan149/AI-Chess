@@ -1,5 +1,5 @@
-WIDTH = 200
-HEIGHT = 200
+WIDTH = 800
+HEIGHT = 800
 
 # Board dimension
 ROWS = 8

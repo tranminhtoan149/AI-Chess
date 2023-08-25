@@ -1,5 +1,8 @@
+from piece import Piece
+
+
 class Square:
-    def __init__(self, row, col, piece=None):
+    def __init__(self, row, col, piece:Piece=None):
         self.row = row
         self.col = col
         self.piece = piece
