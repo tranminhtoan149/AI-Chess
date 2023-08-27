@@ -16,11 +16,9 @@ class Minimax:
         best_move_final = None
         for x in possible_moves:
             board_temp = copy.deepcopy(board)
-            if x.init_move.row == 3 and x.init_move.col == 7:
-                print(1)
             board_temp.move(x)
             value = self.minimax_function(
-                self.depth - 1, board_temp, not is_maximizing)
+                self.depth - 1, board_temp, -10000, 10000, not is_maximizing)
             del board_temp
             if (value >= best_move):
                 print("Best move: ", str(best_move_final))
@@ -33,7 +31,7 @@ class Minimax:
                 best_move_final = x
         return best_move_final
 
-    def minimax_function(self, depth, board: Board, is_maximizing):
+    def minimax_function(self, depth, board: Board, alpha, beta, is_maximizing):
         self.current_player = 'white'
         if (depth == 0):
             return -self.evaluation(board)
@@ -44,8 +42,11 @@ class Minimax:
                 board_temp = copy.deepcopy(board)
                 board_temp.move(move, testing=True)
                 best_move = max(best_move, self.minimax_function(
-                    depth - 1, board_temp, not is_maximizing))
+                    depth - 1, board_temp, alpha, beta, not is_maximizing))
                 del board_temp
+                alpha = max(alpha, best_move)
+                if beta <= alpha:
+                    return best_move
             return best_move
         else:
             best_move = 9999
@@ -53,8 +54,11 @@ class Minimax:
                 board_temp = copy.deepcopy(board)
                 board_temp.move(move, testing=True)
                 best_move = min(best_move, self.minimax_function(
-                    depth - 1, board_temp, not is_maximizing))
+                    depth - 1, board_temp, alpha, beta, not is_maximizing))
                 del board_temp
+                beta = min(beta, best_move)
+                if beta <= alpha:
+                    return best_move
             return best_move
 
     def evaluation(self, board: Board):
@@ -69,5 +73,4 @@ class Minimax:
                         s = -1 if x.piece.color == 'black' else 1
                         pos_value = x.piece.pos_scores[i][j] * s
                     evaluation += x.piece.get_value() + pos_value
-
         return evaluation
