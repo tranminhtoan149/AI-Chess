@@ -3,51 +3,59 @@ import copy
 
 
 class Minimax:
-    def __init__(self,depth):
+    def __init__(self, depth):
         self.depth = depth
-        self.best_move = -9999
-        self.second_best = -9999
-        self.third_best = -9999
+        self.current_player = 'black'
 
-    def minimax_root(self, board:Board, is_maximizing):
-        possibleMoves = board.get_all_possible_moves()
-        print(possibleMoves)
-        bestMoveFinal = possibleMoves[0]
-        for x in possibleMoves:
+    def minimax_root(self, board: Board, is_maximizing):
+        self.current_player = 'black'
+        possible_moves = board.get_all_possible_moves(self.current_player)
+        best_move = -9999
+        second_best = -9999
+        third_best = -9999
+        best_move_final = None
+        for x in possible_moves:
             board_temp = copy.deepcopy(board)
+            if x.init_move.row == 3 and x.init_move.col == 7:
+                print(1)
             board_temp.move(x)
-            value = max(self.best_move, self.minimax(self.depth - 1, board_temp, not is_maximizing))
+            value = self.minimax_function(
+                self.depth - 1, board_temp, not is_maximizing)
             del board_temp
-            if( value > self.best_move):
-                print("Best score: " ,str(self.best_move))
-                print("Best move: ",str(bestMoveFinal))
-                print("Second best: ", str(self.second_best))
-                self.third_best = self.second_best
-                self.second_best = self.best_move
-                self.best_move = value
-                bestMoveFinal = x
-        return bestMoveFinal
+            if (value >= best_move):
+                print("Best move: ", str(best_move_final))
+                print("Best score: ", str(best_move))
+                print("Second best: ", str(second_best))
+                print("Third best: ", str(third_best))
+                third_best = second_best
+                second_best = best_move
+                best_move = value
+                best_move_final = x
+        return best_move_final
 
-    def minimax(self, depth, board:Board, is_maximizing):
-        if(depth == 0):
-            return - self.evaluation(board)
-        possibleMoves = board.get_all_possible_moves()
-        if(is_maximizing):
-            bestMove = -9999
-            for move in possibleMoves:
+    def minimax_function(self, depth, board: Board, is_maximizing):
+        self.current_player = 'white'
+        if (depth == 0):
+            return -self.evaluation(board)
+        possible_moves = board.get_all_possible_moves(self.current_player)
+        if (is_maximizing):
+            best_move = -9999
+            for move in possible_moves:
                 board_temp = copy.deepcopy(board)
-                board_temp.move(move)
-                bestMove = max(bestMove, self.minimax(depth - 1, board_temp, not is_maximizing))
+                board_temp.move(move, testing=True)
+                best_move = max(best_move, self.minimax_function(
+                    depth - 1, board_temp, not is_maximizing))
                 del board_temp
-            return bestMove
+            return best_move
         else:
-            bestMove = 9999
-            for move in possibleMoves:
+            best_move = 9999
+            for move in possible_moves:
                 board_temp = copy.deepcopy(board)
-                board_temp.move(move)
-                bestMove = min(bestMove, self.minimax(depth - 1, board_temp, not is_maximizing))
+                board_temp.move(move, testing=True)
+                best_move = min(best_move, self.minimax_function(
+                    depth - 1, board_temp, not is_maximizing))
                 del board_temp
-            return bestMove
+            return best_move
 
     def evaluation(self, board: Board):
         evaluation = 0
@@ -56,22 +64,10 @@ class Minimax:
             for j in range(8):
                 x = board.get_piece(i, j)
                 if x.has_piece():
-                    evaluation += -x.piece.get_value()
-        return evaluation
+                    pos_value = 0
+                    if x.piece.name != 'king':
+                        s = -1 if x.piece.color == 'black' else 1
+                        pos_value = x.piece.pos_scores[i][j] * s
+                    evaluation += x.piece.get_value() + pos_value
 
-# def main():
-#     board = Board()
-#     n = 0
-#     print(board)
-#     while n < 100:
-#         if n%2 == 0:
-#             move = input("Enter move: ")
-#             move = Board.move(move)
-#             board.push(move)
-#         else:
-#             print("Computers Turn:")
-#             move = minimaxRoot(4,board,True)
-#             move = chess.Move.from_uci(str(move))
-#             board.push(move)
-#         print(board)
-#         n += 1
+        return evaluation
